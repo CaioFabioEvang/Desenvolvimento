@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #maze {
+            display: grid;
+            gap: 1px;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid black;
+            box-sizing: border-box;
+        }
+
+        .start {
+            background-color: green;
+        }
+
+        .end {
+            background-color: red;
+        }
+
+        .player {
+            background-color: blue;
+        }
+
+        .hole {
+            background-color: black;
+        }
+
+        .cols-5 {
+            grid-template-columns: repeat(5, 50px);
+        }
+
+        .cols-10 {
+            grid-template-columns: repeat(10, 50px);
+        }
+
+        .cols-15 {
+            grid-template-columns: repeat(15, 50px);
+        }
+    </style>
+</head>
+<body>
+    <div id="maze"></div>
+        <h1 id="Info-1"></h1>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let maze = document.getElementById("maze");
+
+            let phase = 1;
+            let maxPhases = 3;
+
+            let rows = 5 + (phase - 1) * 5;
+            let cols = 5 + (phase - 1) * 5;
+            let maxHoles = getHoleCountForPhase(phase);
+            let holeCount = 0;
+
+            let playerPosition = { row: 0, col: 0 };
+
+            function resetGame() {
+                maze.innerHTML = "";
+                holeCount = 0;
+
+                playerPosition = { row: 0, col: 0 };
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const cell = document.createElement("div");
+                        cell.classList.add("cell");
+
+                        if (i === 0 && j === 0) {
+                            cell.classList.add("start");
+                        }
+
+                        if (i === rows - 1 && j === cols - 1) {
+                            cell.classList.add("end");
+                        }
+
+                        maze.appendChild(cell);
+                    }
+                }
+
+                placeHoles();
+                maze.classList = `cols-${cols}`;
+            }
+
+            function placeHoles() {
+                let availableCells = Array.from(maze.children).filter(cell => !cell.classList.contains('start') && !cell.classList.contains('end'));
+
+                for (let i = 0; i < maxHoles; i++) {
+                    const randomIndex = Math.floor(Math.random() * availableCells.length);
+                    const holeCell = availableCells[randomIndex];
+                    holeCell.classList.add("hole");
+                    availableCells.splice(randomIndex, 1);
+                }
+            }
+
+            function createMaze() {
+                maze.style.setProperty('--cols', cols);
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const cell = document.createElement("div");
+                        cell.classList.add("cell");
+
+                        if (i === 0 && j === 0) {
+                            cell.classList.add("start");
+                        }
+
+                        if (i === rows - 1 && j === cols - 1) {
+                            cell.classList.add("end");
+                        }
+
+                        maze.appendChild(cell);
+                    }
+                }
+
+                placeHoles();
+                maze.classList = `cols-${cols}`;
+            }
+
+            function isStartOrEndCell(row, col) {
+                return (row === 0 && col === 0) || (row === rows - 1 && col === cols - 1);
+            }
+
+            function updatePlayerPosition() {
+                document.querySelectorAll(".player").forEach(function (cell) {
+                    cell.classList.remove("player");
+                });
+
+                const playerCell = maze.children[playerPosition.row * cols + playerPosition.col];
+                playerCell.classList.add("player");
+
+                if (playerPosition.row === rows - 1 && playerPosition.col === cols - 1) {
+                    alert("Parabéns! Você avançou para a próxima fase.");
+
+                    if (phase < maxPhases) {
+                        phase++;
+                        rows = 5 + (phase - 1) * 5;
+                        cols = 5 + (phase - 1) * 5;
+                        maxHoles = getHoleCountForPhase(phase);
+                        resetGame();
+                    } else {
+                        alert("Você concluiu todas as fases!");
+                        phase = 1;
+                        rows = 5;
+                        cols = 5;
+                        maxHoles = getHoleCountForPhase(phase);
+                        resetGame();
+                    }
+                }
+            }
+
+            function getHoleCountForPhase(phase) {
+                switch (phase) {
+                    case 1:
+                        return 3;
+                    case 2:
+                        return 9;
+                    case 3:
+                        return 13;
+                    default:
+                        return 3;
+                }
+            }
+
+            createMaze();
+            resetGame();
+            updatePlayerPosition();
+
+            document.addEventListener("keydown", function (event) {
+                let nextRow = playerPosition.row;
+                let nextCol = playerPosition.col;
+
+                if (event.key === "ArrowUp" && nextRow > 0) {
+                    nextRow--;
+                } else if (event.key === "ArrowDown" && nextRow < rows - 1) {
+                    nextRow++;
+                } else if (event.key === "ArrowLeft" && nextCol > 0) {
+                    nextCol--;
+                } else if (event.key === "ArrowRight" && nextCol < cols - 1) {
+                    nextCol++;
+                }
+
+                const nextCell = maze.children[nextRow * cols + nextCol];
+                if (nextCell.classList.contains("hole")) {
+                    alert("Você perdeu! Tente novamente.");
+                    phase = 1;
+                    rows = 5;
+                    cols = 5;
+                    maxHoles = getHoleCountForPhase(phase);
+                    resetGame();
+                } else {
+                    playerPosition = { row: nextRow, col: nextCol };
+                    updatePlayerPosition();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
